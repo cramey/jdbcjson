@@ -115,6 +115,11 @@ public class JDBCJSON
 							writer.value(rs.getLong(i));
 						break;
 
+						case Types.REAL:
+							writer.name(rsmd.getColumnName(i));
+							writer.value(rs.getFloat(i));
+						break;
+
 						case Types.DOUBLE:
 						case Types.FLOAT:
 							writer.name(rsmd.getColumnName(i));
