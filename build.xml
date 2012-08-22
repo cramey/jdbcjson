@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<project name="jdbcjson" default="compile">
+	<property name="version.num" value="1.0" />
+
+	<target name="clean">
+		<delete file="${ant.project.name}-${version.num}.jar" />
+		<delete includeemptydirs="true">
+			<fileset dir="classes" includes="**/*" />
+		</delete>
+	</target>
+
+	<target name="compile">
+		<mkdir dir="classes" />
+		<javac includeantruntime="false" target="1.6" source="1.6"
+			srcdir="src" destdir="classes" />
+	</target>
+
+	<target name="jar" depends="compile">
+		<delete file="${ant.project.name}-${version.num}.jar" />
+		<jar destfile="${ant.project.name}-${version.num}.jar">
+			<fileset dir="classes" />
+			<manifest>
+				<attribute name="Main-Class"
+					value="com.binarythought.jdbcjson.JDBCJSON" />
+			</manifest>
+		</jar>
+	</target>
+</project>
