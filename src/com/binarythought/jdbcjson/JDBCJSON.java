@@ -63,6 +63,9 @@ public class JDBCJSON
 		String out = properties.getProperty(job + ".out");
 		if(out == null){ out = job + ".json"; }
 
+		String driver = properties.getProperty(job + ".driver");
+		if(driver != null){ Class.forName(driver); }
+
 		Connection conn = null;
 		JsonWriter writer = null;
 		try {
