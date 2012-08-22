@@ -66,8 +66,6 @@ public class JDBCJSON
 		Connection conn = null;
 		JsonWriter writer = null;
 		try {
-			writer = new JsonWriter(new FileWriter(out, false));
-
 			conn = DriverManager.getConnection(url);
 
 			Statement st = conn.createStatement(
@@ -79,6 +77,7 @@ public class JDBCJSON
 			ResultSetMetaData rsmd = rs.getMetaData();
 			int columns = rsmd.getColumnCount();
 
+			writer = new JsonWriter(new FileWriter(out, false));
 			writer.beginArray();
 			while(rs.next()){
 				writer.beginObject();
