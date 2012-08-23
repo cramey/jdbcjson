@@ -2,6 +2,7 @@ package com.binarythought.jdbcjson;
 
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DriverManager; 
 import java.sql.ResultSet;
@@ -197,12 +198,30 @@ public class JDBCJSON
 						}
 					break;
 
+					case Types.CLOB:
+						Clob clob = rs.getClob(i);
+						if(clob == null){
+							if(column == null){ writer.name(rsmd.getColumnName(i)); }
+							writer.nullValue();
+						} else if(clob.length() <= Integer.MAX_VALUE){
+							if(column == null){ writer.name(rsmd.getColumnName(i)); }
+							writer.value(clob.getSubString(1, (int)clob.length()));
+						} else if(debug){
+							warnings.add(
+								"CLOB column " + 
+								(column == null ? rsmd.getColumnName(i) : column) + 
+								" too big"
+							);
+						}
+					break;
+
 					default:
 						if(debug){
 							warnings.add(
 								"Unsupported column, " +
 								(column == null ? rsmd.getColumnName(i) : column) + 
-								", type " + rsmd.getColumnTypeName(i)
+								", type " + rsmd.getColumnTypeName(i) + " [" + 
+								rsmd.getColumnType(i) + "]"
 							);
 						}
 					break;
