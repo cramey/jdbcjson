@@ -18,10 +18,10 @@ documentation for more details.) `sql` is the SQL statement executed
 whose result is used to generate the JSON. `out` is the path for
 resulting JSON. Take the following example:
 
-		people.driver = net.sourceforge.jtds.jdbc.Driver
-		people.url = jdbc:jtds:sqlserver://myserver/db;user=sa;password=sa
-		people.sql = SELECT * FROM people
-		people.out = people.json
+        people.driver = net.sourceforge.jtds.jdbc.Driver
+        people.url = jdbc:jtds:sqlserver://myserver/db;user=sa;password=sa
+        people.sql = SELECT * FROM people
+        people.out = people.json
 
 
 This properties file will create a job called _people_ that will query
@@ -35,7 +35,7 @@ the first time you run a new properties file against JDBC. The debug
 switch will give you additional warnings about things like unsupported
 fields (BLOBs, for example.)
 
-    java -jar jdbcjson.jar -d people.properties
+        java -jar jdbcjson.jar -d people.properties
 
 
 advanced usage
@@ -46,10 +46,10 @@ properties have default values, based on the job name. The `sql` parameter
 defaults to `SELECT * FROM <jobname>`. The `out` parameter defaults to
 `<jobname>.json`. Thus:
 
-    mytable.url = jdbc:postgresql://localhost/mydb?user=postgres&password=postgres
+        mytable.url = jdbc:postgresql://localhost/mydb?user=postgres&password=postgres
 
 Is the same as:
 
-    mytable.url = jdbc:postgresql://localhost/mydb?user=postgres&password=postgres
-		mytable.sql = SELECT * FROM mytable
-		mytable.out = mytable.json
+        mytable.url = jdbc:postgresql://localhost/mydb?user=postgres&password=postgres
+        mytable.sql = SELECT * FROM mytable
+        mytable.out = mytable.json
