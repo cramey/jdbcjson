@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <project name="jdbcjson" default="compile">
-	<property name="version.num" value="1.0" />
+	<property name="version.num" value="1.1" />
 
 	<target name="clean">
 		<delete file="${ant.project.name}-${version.num}.jar" />

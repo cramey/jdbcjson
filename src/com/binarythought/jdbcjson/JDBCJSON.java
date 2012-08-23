@@ -18,12 +18,20 @@ import com.google.gson.stream.JsonWriter;
 
 public class JDBCJSON
 {
+	private static final DateFormat dateformat = DateFormat.getDateInstance(DateFormat.SHORT);
+	private static final DateFormat timeformat = DateFormat.getTimeInstance(DateFormat.SHORT);
+	private static final DateFormat datetimeformat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
+
+	private boolean debug;
 	private Properties properties;
+	private Set<String> warnings;
 
 
-	public JDBCJSON()
+	public JDBCJSON(boolean debug)
 	{
-		properties = new Properties();
+		this.properties = new Properties();
+		this.debug = debug;
+		this.warnings = new HashSet<String>();
 	}
 
 
@@ -46,15 +54,15 @@ public class JDBCJSON
 		return jobs.toArray(new String[0]);
 	}
 
-	
-	public void run(String job, Set<String> warnings) throws Exception
-	{
-		DateFormat dateformat = DateFormat.getDateInstance(DateFormat.SHORT);
-		DateFormat timeformat = DateFormat.getTimeInstance(DateFormat.SHORT);
-		DateFormat datetimeformat = DateFormat.getDateTimeInstance(
-			DateFormat.SHORT, DateFormat.SHORT
-		);
 
+	public Set<String> getWarnings()
+	{
+		return warnings;
+	}
+
+
+	public void run(String job) throws Exception
+	{
 		String url = properties.getProperty(job + ".url");
 
 		String sql = properties.getProperty(job + ".sql");
@@ -77,101 +85,9 @@ public class JDBCJSON
 			);
 
 			ResultSet rs = st.executeQuery(sql);
-			ResultSetMetaData rsmd = rs.getMetaData();
-			int columns = rsmd.getColumnCount();
-
 			writer = new JsonWriter(new FileWriter(out, false));
-			writer.beginArray();
-			while(rs.next()){
-				writer.beginObject();
-				for(int i = 1; i <= columns; i++){
-					switch(rsmd.getColumnType(i)){
-						case Types.CHAR:
-						case Types.LONGVARCHAR:
-						case Types.LONGNVARCHAR:
-						case Types.NCHAR:
-						case Types.NVARCHAR:
-						case Types.VARCHAR:
-							writer.name(rsmd.getColumnName(i));
-							writer.value(rs.getString(i));
-						break;
 
-						case Types.NULL:
-							writer.name(rsmd.getColumnName(i));
-							writer.nullValue();
-						break;
-
-						case Types.BIT:
-						case Types.BOOLEAN:
-							writer.name(rsmd.getColumnName(i));
-							writer.value(rs.getBoolean(i));
-						break;
-
-						case Types.BIGINT:
-						case Types.INTEGER:
-						case Types.SMALLINT:
-						case Types.TINYINT:
-							writer.name(rsmd.getColumnName(i));
-							writer.value(rs.getLong(i));
-						break;
-
-						case Types.REAL:
-							writer.name(rsmd.getColumnName(i));
-							writer.value(rs.getFloat(i));
-						break;
-
-						case Types.DOUBLE:
-						case Types.FLOAT:
-							writer.name(rsmd.getColumnName(i));
-							writer.value(rs.getDouble(i));
-						break;
-
-						case Types.DECIMAL:
-						case Types.NUMERIC:
-							writer.name(rsmd.getColumnName(i));
-							writer.value(rs.getBigDecimal(i));
-						break;
-
-						case Types.DATE:
-							writer.name(rsmd.getColumnName(i));
-							if(rs.getDate(i) == null){
-								writer.nullValue();
-							} else {
-								writer.value(dateformat.format(rs.getDate(i)));
-							}
-						break;
-
-						case Types.TIME:
-							writer.name(rsmd.getColumnName(i));
-							if(rs.getTime(i) == null){
-								writer.nullValue();
-							} else {
-								writer.value(timeformat.format(rs.getTime(i)));
-							}
-						break;
-
-						case Types.TIMESTAMP:
-							writer.name(rsmd.getColumnName(i));
-							if(rs.getTimestamp(i) == null){
-								writer.nullValue();
-							} else {
-								writer.value(datetimeformat.format(rs.getTimestamp(i)));
-							}
-						break;
-
-						default:
-							if(warnings != null){
-								warnings.add(
-									"Unsupported column, " + rsmd.getColumnName(i) + 
-									", type " + rsmd.getColumnTypeName(i)
-								);
-							}
-						break;
-					}
-				}
-				writer.endObject();
-			}
-			writer.endArray();
+			process(rs, writer, null);
 
 		} finally {
 			try { writer.close(); }
@@ -180,6 +96,119 @@ public class JDBCJSON
 			try { conn.close(); }
 			catch(Exception ex){ }
 		}
+	}
+
+
+	private void process(ResultSet rs, JsonWriter writer, String column) throws Exception
+	{
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int count = rsmd.getColumnCount();
+
+		writer.beginArray();
+		while(rs.next()){
+			if(column == null){ writer.beginObject(); }
+			for(int i = (column == null ? 1 : 2); i <= count; i++){
+				switch(rsmd.getColumnType(i)){
+					case Types.CHAR:
+					case Types.LONGVARCHAR:
+					case Types.LONGNVARCHAR:
+					case Types.NCHAR:
+					case Types.NVARCHAR:
+					case Types.VARCHAR:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						writer.value(rs.getString(i));
+					break;
+
+					case Types.NULL:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						writer.nullValue();
+					break;
+
+					case Types.BIT:
+					case Types.BOOLEAN:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						writer.value(rs.getBoolean(i));
+					break;
+
+					case Types.BIGINT:
+					case Types.INTEGER:
+					case Types.SMALLINT:
+					case Types.TINYINT:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						writer.value(rs.getLong(i));
+					break;
+
+					case Types.REAL:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						writer.value(rs.getFloat(i));
+					break;
+
+					case Types.DOUBLE:
+					case Types.FLOAT:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						writer.value(rs.getDouble(i));
+					break;
+
+					case Types.DECIMAL:
+					case Types.NUMERIC:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						writer.value(rs.getBigDecimal(i));
+					break;
+
+					case Types.DATE:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						if(rs.getDate(i) == null){
+							writer.nullValue();
+						} else {
+							writer.value(dateformat.format(rs.getDate(i)));
+						}
+					break;
+
+					case Types.TIME:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						if(rs.getTime(i) == null){
+							writer.nullValue();
+						} else {
+							writer.value(timeformat.format(rs.getTime(i)));
+						}
+					break;
+
+					case Types.TIMESTAMP:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						if(rs.getTimestamp(i) == null){
+							writer.nullValue();
+						} else {
+							writer.value(datetimeformat.format(rs.getTimestamp(i)));
+						}
+					break;
+
+					case Types.ARRAY:
+						if(column == null){ writer.name(rsmd.getColumnName(i)); }
+						if(rs.getArray(i) == null){
+							writer.nullValue();
+						} else {
+							process(
+								rs.getArray(i).getResultSet(),
+								writer,
+								(column == null ? rsmd.getColumnName(i) : column)
+							);
+						}
+					break;
+
+					default:
+						if(debug){
+							warnings.add(
+								"Unsupported column, " +
+								(column == null ? rsmd.getColumnName(i) : column) + 
+								", type " + rsmd.getColumnTypeName(i)
+							);
+						}
+					break;
+				}
+			}
+			if(column == null){ writer.endObject(); }
+		}
+		writer.endArray();
 	}
 
 
@@ -207,7 +236,7 @@ public class JDBCJSON
 			System.exit(1);
 		}
 
-		JDBCJSON jdbcjson = new JDBCJSON();
+		JDBCJSON jdbcjson = new JDBCJSON(debug);
 
 		try {
 			jdbcjson.load(properties_path);
@@ -220,22 +249,16 @@ public class JDBCJSON
 
 		String[] jobs = jdbcjson.list();
 		for(String job : jobs){
-			try {
-				if(debug){
-					HashSet<String> warnings = new HashSet<String>();
-					jdbcjson.run(job, warnings);
-
-					for(String warning : warnings){
-						System.out.println("Warning: " + warning);
-					}
-				} else {
-					jdbcjson.run(job, null);
-				}
-			} catch(Exception ex){
+			try { jdbcjson.run(job); }
+			catch(Exception ex){
 				System.out.print("Error while running job " + job + ": ");
 				System.out.println(ex.getMessage());
 				if(debug){ ex.printStackTrace(); }
 				System.exit(1);
+			}
+
+			for(String warning : jdbcjson.getWarnings()){
+				System.out.println("Warning in " + job + ": " + warning);
 			}
 		}
 
