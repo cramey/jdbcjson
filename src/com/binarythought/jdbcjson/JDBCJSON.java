@@ -64,6 +64,7 @@ public class JDBCJSON
 	public void run(String job) throws Exception
 	{
 		String url = properties.getProperty(job + ".url");
+		if(url == null){ url = properties.getProperty(".url"); }
 
 		String sql = properties.getProperty(job + ".sql");
 		if(sql == null){ sql = "SELECT * FROM " + job; }
@@ -72,6 +73,7 @@ public class JDBCJSON
 		if(out == null){ out = job + ".json"; }
 
 		String driver = properties.getProperty(job + ".driver");
+		if(driver == null){ driver = properties.getProperty(".driver"); }
 		if(driver != null){ Class.forName(driver); }
 
 		Connection conn = null;
